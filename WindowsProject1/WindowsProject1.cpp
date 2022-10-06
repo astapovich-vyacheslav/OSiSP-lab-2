@@ -61,7 +61,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		hdc = BeginPaint(hWnd, &ps);
 		height = (winRect.bottom - winRect.top) / verticals;
 		width = (winRect.right - winRect.left) / horizontals;
-		for (int i = 0; i < verticals; i++)
+		for (int i = 0; i < verticals; i++) 
 			for (int j = 0; j < horizontals; j++)
 			{
 				Rectangle(hdc, j * width, i * height, j * width + width, i * height + height);
