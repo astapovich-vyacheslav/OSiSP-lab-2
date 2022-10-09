@@ -5,7 +5,10 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInst, HICON Icon, LPCWSTR Name, WNDPROC Procedure);
 static int x = 50, y = 50, dx = 20, dy = 20;
 const int WHEIGHT = 750, WWIDTH = 1000;
-static int bmHeight = 50, bmWidth = 50;
+static int prevH = 0, prevW = 0, horizontals = 5, verticals = 3, height, width;
+static bool scaleChanged = false;
+static wchar_t*** stringMatrix;
+const wchar_t* EMPTY = L" ";
 
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdshow)
@@ -16,7 +19,16 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 	if (!RegisterClassW(&SoftwareMainClass)) { return -1; }
 	MSG SoftwareMainMessage = { 0 };
 																		//Cordinates and size
-	CreateWindow(L"MainWindowClass", L"LAB 1", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 50, 50, WWIDTH, WHEIGHT, NULL, NULL, NULL, NULL);
+	CreateWindow(L"MainWindowClass", L"LAB 2", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 50, 50, WWIDTH, WHEIGHT, NULL, NULL, NULL, NULL);
+
+
+	stringMatrix = new wchar_t** [verticals];
+	for (int i = 0; i < verticals; i++)
+	{
+		stringMatrix[i] = new wchar_t*[horizontals];
+		for (int j = 0; j < horizontals; j++)
+			stringMatrix[i][j] = (wchar_t*)EMPTY;
+	}
 
 	while (GetMessage(&SoftwareMainMessage, NULL, NULL, NULL))
 	{
@@ -43,12 +55,10 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 {
 	HDC hdc, hmdc;
 	PAINTSTRUCT ps;
-	int horizontals = 5, verticals = 3; //TODO: read those from file
 	static bool mouseClick = false;
 
 	RECT winRect;
 	GetClientRect(hWnd, &winRect);
-	int height, width;
 
 
 	switch (msg) {
@@ -61,12 +71,18 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		hdc = BeginPaint(hWnd, &ps);
 		height = (winRect.bottom - winRect.top) / verticals;
 		width = (winRect.right - winRect.left) / horizontals;
-		for (int i = 0; i < verticals; i++) 
+		for (int i = 0; i < verticals; i++)
 			for (int j = 0; j < horizontals; j++)
 			{
 				Rectangle(hdc, j * width, i * height, j * width + width, i * height + height);
 			}
-		InvalidateRect(hWnd, 0, true);
+		if (height != prevH || width != prevW || scaleChanged)
+		{
+			InvalidateRect(hWnd, 0, true);
+			scaleChanged = false;
+		}
+		prevH = height;
+		prevW = width;
 		break;
 	case WM_KEYDOWN:
 	{
@@ -74,56 +90,37 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		{
 		case VK_LEFT:
 		{
-			x -= dx;
+			if (horizontals > 1)
+				horizontals--;
 			break;
 		}
 		case VK_RIGHT:
 		{
-			x += dx;
+			horizontals++;
 			break;
 		}
 		case VK_UP:
 		{
-			y -= dy;
+			if (verticals > 1)
+				verticals--;
 			break;
 		}
 		case VK_DOWN:
 		{
-			y += dy;
+			verticals++;
 			break;
 		}
 		}
+		scaleChanged = true;
 		InvalidateRect(hWnd, 0, true);
 	}
-	case WM_MOUSEWHEEL:
-	{
-		int delta = (short)HIWORD(wp) / 5;
-		if (LOWORD(wp) == MK_SHIFT) {
-			x += delta;
-		}
-		else {
-			y -= delta;
-		}
-		InvalidateRect(hWnd, 0, TRUE);
-		break;
-	}
+
 	case WM_LBUTTONDOWN: {
 		mouseClick = true;
+		HINSTANCE hInst = (HINSTANCE)GetWindowLong(hWnd, NULL);
+		CreateWindow(L"TextWindowClass", L"Input text", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 50, 50, 500, 500, hWnd, NULL, hInst, NULL);
 		break;
 	}
-	case WM_LBUTTONUP: {
-		mouseClick = false;
-		break;
-	}
-	case WM_MOUSEMOVE: {
-		if (mouseClick && GetPixel(GetDC(hWnd), LOWORD(lp), HIWORD(lp)) != COLOR_WINDOW) {
-			x = LOWORD(lp) - 50;
-			y = HIWORD(lp) - 50;
-			InvalidateRect(hWnd, 0, TRUE);
-		}
-		break;
-	}
-
 	default: return DefWindowProc(hWnd, msg, wp, lp);
 	}
 }
