@@ -1,8 +1,11 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h> 
 #include <fstream>
+#include <tchar.h>
 #define MAX_SIZE 32
 #define MAX_STR_SIZE 2048
+#define MAX_WIDTH 10
+#define MAX_HEIGHT 30
 HANDLE hBitmap;
 
 LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
@@ -15,6 +18,9 @@ static bool scaleChanged = false;
 static wchar_t* stringMatrix[MAX_SIZE][MAX_SIZE];
 static wchar_t allTexts[MAX_SIZE * MAX_SIZE][MAX_STR_SIZE];
 const wchar_t* EMPTY = L"";
+
+static LOGFONT lf; //создаём экземпляр LOGFONT
+static HFONT hFont; //Cоздали шрифт
 
 
 
@@ -52,6 +58,14 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 			stringMatrix[i][j] = (wchar_t*)L"";
 	}
 	RefillMatrix();
+
+	lf.lfCharSet = DEFAULT_CHARSET; //значение по умолчанию
+	lf.lfPitchAndFamily = DEFAULT_PITCH; //значения по умолчанию
+	strcpy((char*)lf.lfFaceName, "Times New Roman"); //копируем в строку название шрифта
+	lf.lfHeight = MAX_HEIGHT; //высота
+	lf.lfWidth = MAX_WIDTH; //ширина
+	lf.lfWeight = 40; //толщина
+	lf.lfEscapement = 0; //шрифт без поворота
 
 
 	while (GetMessage(&SoftwareMainMessage, NULL, NULL, NULL))
@@ -94,6 +108,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		hdc = BeginPaint(hWnd, &ps);
 		height = (winRect.bottom - winRect.top) / verticals;
 		width = (winRect.right - winRect.left) / horizontals;
+		
 		for (int i = 0; i < verticals; i++)
 			for (int j = 0; j < horizontals; j++)
 			{
@@ -103,11 +118,18 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 				rect.right = j * width + width;
 				rect.bottom = i * height + height;
 				Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
-				AlternateSize(hdc, &stringMatrix[i][j], width, height);
 				rect.top += height / 5;
+				AlternateSize(hdc, &stringMatrix[i][j], width, height);
+				hFont = CreateFontIndirect(&lf); //Cоздали шрифт
+				SelectObject(hdc, hFont); //Он будет иметь силу только когда мы его выберем
+				SetTextColor(hdc, RGB(0, 0, 0)); //зададим цвет текста
+				SetBkColor(hdc, RGB(255, 255, 255)); //зададим цвет фона
+				
+				
 				DrawText(hdc, stringMatrix[i][j], lstrlen(stringMatrix[i][j]), &rect, DT_CENTER);
-
+				DeleteObject(hFont); //выгрузим из памяти объект шрифта
 			}
+		
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_SIZE:
@@ -166,15 +188,10 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	GetTextExtentPoint32(hdc, *str, lstrlen(*str), &size);
 	if (size.cx >= width)
 	{
-		/*for (int i = lstrlen(*str) - 1; i > 0; i--)
-		{
-			if (result[i] == (wchar_t)32)
-			{
-				result[i] = (wchar_t)L"\r\n";
-				break;
-			}
-		}*/
+		lf.lfWidth = width / lstrlen(*str);
 	}
+	else
+		lf.lfWidth = MAX_WIDTH;
 	//*str = result;
 }
 
