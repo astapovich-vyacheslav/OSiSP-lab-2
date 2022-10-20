@@ -7,6 +7,7 @@
 #define MAX_WIDTH 10
 #define TEXT_HEIGHT 30
 #define MIN_CELL_WIDTH 100
+#define DELTA 10
 static RECT winRect;
 
 LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
@@ -204,7 +205,16 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	//wchar_t* result = (wchar_t*)L"";
 	//lstrcpy(result, *str);
 	GetTextExtentPoint32(hdc, *str, lstrlen(*str), &size);
-	if (size.cx / 2 >= width)
+	if (size.cy * 3 >= height)
+	{
+		lf.lfHeight = height / 3;
+		lf.lfWidth = lf.lfHeight / 3;
+	}
+	else
+	{
+		lf.lfHeight = TEXT_HEIGHT;
+	}
+	if (size.cx / 2 >= width + DELTA)
 	{
 		lf.lfWidth = 2 * width / lstrlen(*str);
 		lf.lfHeight = 3 * lf.lfWidth;
@@ -213,15 +223,7 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	{
 		lf.lfWidth = MAX_WIDTH;
 	}
-	if (size.cy >= height / 4)
-	{
-		lf.lfHeight /= 2;
-		lf.lfWidth = lf.lfHeight / 3;
-	}
-	else
-	{
-		lf.lfHeight = TEXT_HEIGHT;
-	}
+	
 	//*str = result;
 }
 
