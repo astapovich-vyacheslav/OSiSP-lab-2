@@ -5,8 +5,9 @@
 #define MAX_SIZE 32
 #define MAX_STR_SIZE 2048
 #define MAX_WIDTH 10
-#define MAX_HEIGHT 30
-HANDLE hBitmap;
+#define TEXT_HEIGHT 30
+#define MIN_CELL_WIDTH 100
+static RECT winRect;
 
 LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInst, HICON Icon, LPCWSTR Name, WNDPROC Procedure);
@@ -21,6 +22,7 @@ const wchar_t* EMPTY = L"";
 
 static LOGFONT lf; //создаём экземпляр LOGFONT
 static HFONT hFont; //Cоздали шрифт
+static bool minHeight = false, minWidth = false;
 
 
 
@@ -62,7 +64,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 	lf.lfCharSet = DEFAULT_CHARSET; //значение по умолчанию
 	lf.lfPitchAndFamily = DEFAULT_PITCH; //значения по умолчанию
 	strcpy((char*)lf.lfFaceName, "Times New Roman"); //копируем в строку название шрифта
-	lf.lfHeight = MAX_HEIGHT; //высота
+	lf.lfHeight = TEXT_HEIGHT; //высота
 	lf.lfWidth = MAX_WIDTH; //ширина
 	lf.lfWeight = 40; //толщина
 	lf.lfEscapement = 0; //шрифт без поворота
@@ -94,7 +96,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 	HDC hdc, hmdc;
 	PAINTSTRUCT ps;
 	static bool mouseClick = false;
-	RECT winRect;
+	
 	GetClientRect(hWnd, &winRect);
 
 
@@ -108,7 +110,18 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		hdc = BeginPaint(hWnd, &ps);
 		height = (winRect.bottom - winRect.top) / verticals;
 		width = (winRect.right - winRect.left) / horizontals;
-		
+		/*minHeight = false;
+		minWidth = false;
+		if (height <= TEXT_HEIGHT * 2)
+		{
+			height = TEXT_HEIGHT * 2;
+			minHeight = true;
+		}
+		if (width <= MIN_CELL_WIDTH)
+		{
+			width = MIN_CELL_WIDTH;
+			minWidth = false;
+		}*/
 		for (int i = 0; i < verticals; i++)
 			for (int j = 0; j < horizontals; j++)
 			{
@@ -119,6 +132,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 				rect.bottom = i * height + height;
 				Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
 				rect.top += height / 5;
+				int prevWidth = lf.lfWidth;
 				AlternateSize(hdc, &stringMatrix[i][j], width, height);
 				hFont = CreateFontIndirect(&lf); //Cоздали шрифт
 				SelectObject(hdc, hFont); //Он будет иметь силу только когда мы его выберем
@@ -126,7 +140,9 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 				SetBkColor(hdc, RGB(255, 255, 255)); //зададим цвет фона
 				
 				
-				DrawText(hdc, stringMatrix[i][j], lstrlen(stringMatrix[i][j]), &rect, DT_CENTER);
+				DrawText(hdc, stringMatrix[i][j], lstrlen(stringMatrix[i][j]), &rect, DT_CENTER | DT_EDITCONTROL | DT_WORDBREAK | DT_NOCLIP);
+				if (rect.right - rect.left < width)
+					lf.lfWidth--;
 				DeleteObject(hFont); //выгрузим из памяти объект шрифта
 			}
 		
@@ -134,6 +150,8 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		break;
 	case WM_SIZE:
 	{
+		if (minHeight)
+			SetWindowPos(hWnd, hWnd, winRect.left, winRect.top, TEXT_HEIGHT * 2 * verticals, winRect.top - winRect.bottom, SWP_NOSIZE);
 		InvalidateRect(hWnd, 0, true);
 		break;
 	}
@@ -186,12 +204,24 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	//wchar_t* result = (wchar_t*)L"";
 	//lstrcpy(result, *str);
 	GetTextExtentPoint32(hdc, *str, lstrlen(*str), &size);
-	if (size.cx >= width)
+	if (size.cx / 2 >= width)
 	{
-		lf.lfWidth = width / lstrlen(*str);
+		lf.lfWidth = 2 * width / lstrlen(*str);
+		lf.lfHeight = 3 * lf.lfWidth;
 	}
 	else
+	{
 		lf.lfWidth = MAX_WIDTH;
+	}
+	if (size.cy >= height / 4)
+	{
+		lf.lfHeight /= 2;
+		lf.lfWidth = lf.lfHeight / 3;
+	}
+	else
+	{
+		lf.lfHeight = TEXT_HEIGHT;
+	}
 	//*str = result;
 }
 
