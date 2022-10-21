@@ -222,7 +222,7 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	if (size.cy * 3 >= height - DELTA && size.cx / 2 >= width - DELTA)
 	{
 		lf.lfWidth = 2 * width / lstrlen(*str);
-		lf.lfHeight = height / 3;
+		lf.lfHeight = height / 4;
 	}
 	
 	//*str = result;
