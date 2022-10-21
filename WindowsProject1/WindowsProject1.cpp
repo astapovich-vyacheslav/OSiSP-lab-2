@@ -67,7 +67,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 	strcpy((char*)lf.lfFaceName, "Times New Roman"); //копируем в строку название шрифта
 	lf.lfHeight = TEXT_HEIGHT; //высота
 	lf.lfWidth = MAX_WIDTH; //ширина
-	lf.lfWeight = 40; //толщина
+	lf.lfWeight = 20; //толщина
 	lf.lfEscapement = 0; //шрифт без поворота
 
 
@@ -139,7 +139,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 				SelectObject(hdc, hFont); //Он будет иметь силу только когда мы его выберем
 				SetTextColor(hdc, RGB(222, 58, 58)); //зададим цвет текста
 				SetBkColor(hdc, RGB(255, 255, 255)); //зададим цвет фона
-				
+				SetBkMode(hdc, TRANSPARENT);
 				
 				DrawText(hdc, stringMatrix[i][j], lstrlen(stringMatrix[i][j]), &rect, DT_CENTER | DT_EDITCONTROL | DT_WORDBREAK | DT_NOCLIP);
 				DeleteObject(hFont); //выгрузим из памяти объект шрифта
@@ -186,12 +186,7 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		InvalidateRect(hWnd, 0, true);
 	}
 
-	case WM_LBUTTONDOWN: {
-		mouseClick = true;
-		HINSTANCE hInst = (HINSTANCE)GetWindowLong(hWnd, NULL);
-		CreateWindow(L"TextWindowClass", L"Input text", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 50, 50, 500, 500, hWnd, NULL, hInst, NULL);
-		break;
-	}
+	
 	default: return DefWindowProc(hWnd, msg, wp, lp);
 	}
 }
