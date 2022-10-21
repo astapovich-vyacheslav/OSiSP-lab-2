@@ -137,13 +137,11 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 				AlternateSize(hdc, &stringMatrix[i][j], width, height);
 				hFont = CreateFontIndirect(&lf); //Cоздали шрифт
 				SelectObject(hdc, hFont); //Он будет иметь силу только когда мы его выберем
-				SetTextColor(hdc, RGB(0, 0, 0)); //зададим цвет текста
+				SetTextColor(hdc, RGB(222, 58, 58)); //зададим цвет текста
 				SetBkColor(hdc, RGB(255, 255, 255)); //зададим цвет фона
 				
 				
 				DrawText(hdc, stringMatrix[i][j], lstrlen(stringMatrix[i][j]), &rect, DT_CENTER | DT_EDITCONTROL | DT_WORDBREAK | DT_NOCLIP);
-				if (rect.right - rect.left < width)
-					lf.lfWidth--;
 				DeleteObject(hFont); //выгрузим из памяти объект шрифта
 			}
 		
@@ -151,8 +149,6 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		break;
 	case WM_SIZE:
 	{
-		if (minHeight)
-			SetWindowPos(hWnd, hWnd, winRect.left, winRect.top, TEXT_HEIGHT * 2 * verticals, winRect.top - winRect.bottom, SWP_NOSIZE);
 		InvalidateRect(hWnd, 0, true);
 		break;
 	}
@@ -205,7 +201,7 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	//wchar_t* result = (wchar_t*)L"";
 	//lstrcpy(result, *str);
 	GetTextExtentPoint32(hdc, *str, lstrlen(*str), &size);
-	if (size.cy * 3 >= height)
+	if (size.cy * 3 >= height - DELTA && !(size.cx / 2 >= width - DELTA))
 	{
 		lf.lfHeight = height / 3;
 		lf.lfWidth = lf.lfHeight / 3;
@@ -214,7 +210,7 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	{
 		lf.lfHeight = TEXT_HEIGHT;
 	}
-	if (size.cx / 2 >= width + DELTA)
+	if (size.cx / 2 >= width - DELTA && !(size.cy * 3 >= height - DELTA))
 	{
 		lf.lfWidth = 2 * width / lstrlen(*str);
 		lf.lfHeight = 3 * lf.lfWidth;
@@ -222,6 +218,11 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	else
 	{
 		lf.lfWidth = MAX_WIDTH;
+	}
+	if (size.cy * 3 >= height - DELTA && size.cx / 2 >= width - DELTA)
+	{
+		lf.lfWidth = 2 * width / lstrlen(*str);
+		lf.lfHeight = height / 3;
 	}
 	
 	//*str = result;
