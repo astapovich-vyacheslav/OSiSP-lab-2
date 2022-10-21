@@ -4,10 +4,10 @@
 #include <tchar.h>
 #define MAX_SIZE 32
 #define MAX_STR_SIZE 2048
-#define MAX_WIDTH 10
-#define TEXT_HEIGHT 30
+#define MAX_WIDTH 15
+#define TEXT_HEIGHT 45
 #define MIN_CELL_WIDTH 100
-#define DELTA 10
+#define DELTA 20
 static RECT winRect;
 
 LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
@@ -164,7 +164,8 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		}
 		case VK_RIGHT:
 		{
-			horizontals++;
+			if (horizontals < MAX_SIZE)
+				horizontals++;
 			break;
 		}
 		case VK_UP:
@@ -175,7 +176,8 @@ LRESULT CALLBACK SoftwareMainProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 		}
 		case VK_DOWN:
 		{
-			verticals++;
+			if (verticals < MAX_SIZE)
+				verticals++;
 			break;
 		}
 		}
@@ -201,7 +203,7 @@ static void AlternateSize(HDC hdc, wchar_t** str, int width, int height)
 	//wchar_t* result = (wchar_t*)L"";
 	//lstrcpy(result, *str);
 	GetTextExtentPoint32(hdc, *str, lstrlen(*str), &size);
-	if (size.cy * 3 >= height - DELTA && !(size.cx / 2 >= width - DELTA))
+	if (size.cy * 4 >= height - DELTA && !(size.cx / 2 >= width - DELTA))
 	{
 		lf.lfHeight = height / 3;
 		lf.lfWidth = lf.lfHeight / 3;
